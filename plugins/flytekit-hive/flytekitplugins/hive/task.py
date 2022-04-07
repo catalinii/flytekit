@@ -99,15 +99,13 @@ class HiveTask(SQLTask[HiveConfig]):
 class HiveSelectTask(HiveTask):
     _HIVE_QUERY_FORMATTER = """
         {stage_query_str}
-
-        CREATE TEMPORARY TABLE {{{{ .PerRetryUniqueKey }}}}_tmp AS {select_query_str};
-        CREATE EXTERNAL TABLE {{{{ .PerRetryUniqueKey }}}} LIKE {{{{ .PerRetryUniqueKey }}}}_tmp STORED AS PARQUET;
-        ALTER TABLE {{{{ .PerRetryUniqueKey }}}} SET LOCATION '{{{{ .RawOutputDataPrefix }}}}';
-
-        INSERT OVERWRITE TABLE {{{{ .PerRetryUniqueKey }}}}
-            SELECT *
-            FROM {{{{ .PerRetryUniqueKey }}}}_tmp;
+        CREATE EXTERNAL TABLE {{{{ .PerRetryUniqueKey }}}}
+        LOCATION '{{{{ .RawOutputDataPrefix }}}}' STORED AS PARQUET AS WITH tmp AS ({select_query_str})
+        SELECT
+            *
+        FROM tmp;
         DROP TABLE {{{{ .PerRetryUniqueKey }}}};
+
         """
 
     def __init__(
